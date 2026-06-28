@@ -1,0 +1,47 @@
+name: 🔔 SimplifyJobs Bay Area Watcher
+
+on:
+  schedule:
+    - cron: "0 * * * *"   # every hour, on the hour (UTC)
+  workflow_dispatch:        # also lets you trigger manually from GitHub UI
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write        # needed to upload/download cache
+
+    steps:
+      # 1. Checkout your repo (needed for the script)
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Restore seen_jobs.json from cache so we don't re-alert on old jobs
+      - name: Restore seen jobs cache
+        uses: actions/cache@v4
+        with:
+          path: seen_jobs.json
+          key: seen-jobs-cache
+          restore-keys: seen-jobs-cache
+
+      # 3. Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # 4. Run the watcher script
+      - name: Check for new Bay Area jobs
+        env:
+          GMAIL_USER:     ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASS: ${{ secrets.GMAIL_APP_PASS }}
+          NOTIFY_EMAIL:   ${{ secrets.NOTIFY_EMAIL }}
+        run: python scripts/check_jobs.py
+
+      # 5. Save updated seen_jobs.json back to cache
+      - name: Save seen jobs cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: seen_jobs.json
+          key: seen-jobs-cache-${{ github.run_id }}
