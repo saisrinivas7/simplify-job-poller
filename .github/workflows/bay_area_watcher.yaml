@@ -2,7 +2,7 @@ name: SimplifyJobs Bay Area Watcher
 
 on:
   schedule:
-    - cron: "0 * * * *"   # every hour, on the hour (UTC)
+    - cron: "0 0 * * *"  
   workflow_dispatch:        # also lets you trigger manually from GitHub UI
 
 jobs:
